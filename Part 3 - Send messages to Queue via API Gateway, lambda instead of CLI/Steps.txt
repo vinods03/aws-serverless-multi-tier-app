@@ -1,0 +1,56 @@
+1. Create a lambda function productVisitsSendDataToQueue with default execution role for now and timeout of 5 minutes.
+   Add the required SQS permission to the default role.
+
+2. Go to API Gateway. Create a REST API productVisit. Create a Resource productVisit. Under this resource, create a PUT method using the lambda function created above.
+
+3. Test the API using the messages in the json files.
+
+Sample:
+
+{
+  "ProductId": "d96b49bb-c378-4a15-b2e3-842a9850b23d",
+  "ProductName": "Headphone",
+  "Category": "Accessories",
+  "PricePerUnit": "15",
+  "CustomerId": "be44af0a-74f9-438e-a3ac-e3e21d84259f",
+  "CustomerName": "John Doe",
+  "TimeOfVisit": "2023-01-31T16:23:42.389Z" 
+}
+
+So instead of sending messages using below command in cloudshell, we are now sending messages via API Gateway.
+aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-1.json
+
+4. Develop the code for the lambda function methodically. Start by printing the event.
+   Verify the cloudwatch logs.
+   Use boto3 to send message to SQS queue.
+ 
+
+5. The final verification at this point must be that the message used for testing in API gateway must flow all the way to dynamodb table and S3 data lake bucket.
+
+
+=============== Note that the frontend section of the flow (steps listed below) is not created now ========================
+
+
+1. Deploy API, from Stage Actions -> Generate SDK using Platform Javascript -> download zip file, extract lib and js file and move these to the frontend folder.
+
+2. Create S3 bucket product-visits-webform-vinod with "Block public access" unchecked as this will be used as a static website.
+   Go to the properties of the bucket and enable static website hosting.
+   Add the bucket policy:
+
+{
+	"Version":"2012-10-17",
+	"Statement":[
+		{
+			"Sid":"PublicReadGetObject",
+			"Effect":"Allow",
+			"Principal": "*",
+			"Action":["s3:GetObject"],
+			"Resource":["arn:aws:s3:::product-visits-webform-vinod/*"]
+		}
+	]
+}
+ 
+
+3. Upload the files and folder in "frontend" folder into this S3 bucket.
+
+4. Now copy the S3 bucket url from Static website hosting section into browser. Add product details. This should go into API Gateway and then trigger lambda productVisitsSendDataToQueue.

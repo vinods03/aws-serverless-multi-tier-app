@@ -1,0 +1,5 @@
+1. Create a Glue Crawler product-visits-datalake-crawler on the datalake S3 bucket product-visits-datalake-vinod and execute it.
+
+2. Validate the Glue Data Catalog table product_visits_datalake_vinod - make any change to column names / data types if needed.
+
+3. Query and validate the Glue Data Catalog table product_visits_datalake_vinod using Athena

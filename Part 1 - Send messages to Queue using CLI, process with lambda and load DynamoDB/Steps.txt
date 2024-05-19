@@ -1,0 +1,24 @@
+1. Create a DynamoDB Table ProductVisits with Partition Key as ProductVisitKey.
+
+2. Create a Standard SQS queue ProductVisitsDataQueue. 
+   Used Default Visibility Timeout of 5 minutes and Message retention period of 1 day.
+
+3. Create a lambda function productVisitsDataHandler with a timeout of 5 minutes and basic lambda permissions that writes into Cloudwatch logs.
+   In the role, add required permissions for SQS and DynamoDB.
+   In the Lambda function, add a trigger to the SQS queue.
+
+4. From AWS Console, open a cloud shell. 
+   Upload the message json files in C:\Vinod\AWSDataEngineering\15. AWS Solutions Architect Professional\15. Hands-on Exercises\3. Serverless App\Part 1\Messages.
+
+5. Now send messages to the SQS queue using these json files
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-1.json
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-2.json
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-3.json
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-4.json
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-5.json
+
+6. Develop the code for the lambda function methodically. Start by printing the event and then proceed till you are able to extract the body and the individual columns.
+   Verify the cloudwatch logs.
+   Then create an item that can be written into dynamodb table.
+   Test by sending the messages to sqs queue.
+   The final code is available at productVisitsDataHandler.py.

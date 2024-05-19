@@ -1,0 +1,13 @@
+Create an usage plan product-visits-usage-plan that allows 100 requests per second from the client, 5 concurrent requests the client can invoke your API and a total of 50000 requests per month.
+
+Create an API key and note down the key.
+
+Attach the API key to the Usage plan.
+
+Under the POST and GET methods, Method Request -> set API Key Required to True
+
+To test this, you need to deploy the API and test from outside the API Gateway i.e. through POSTMAN.
+
+In the "Headers", add the key "x-api-key" and pass the API key.
+
+Without the correct key, you will get "403 Forbidden" error.

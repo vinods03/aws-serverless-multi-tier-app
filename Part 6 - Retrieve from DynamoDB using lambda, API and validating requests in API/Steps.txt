@@ -1,0 +1,62 @@
+1. Create Lambda function productVisitsDataRetriever with default execution role and timeout of 5 mins.
+   Add required permissions to the role (like dynamodb access).
+   
+2. In the API productVisit, create a new resource {get-type} under productVisit. Tie this to the above lamda function.
+
+3. Develop the lambda function methodically. Print the event first and then you can segregate / process required data.
+
+4. Note that get-type is a "path parameter".
+   Only Request body will go to lambda function.
+   So initially when you print event in lambda, you will get an empty value.
+   To pass the path parameter, in the Integration Request section of the API, add mapping template:
+   {
+     "type": "$input.params('get-type')"
+   }
+
+5. Once you are able to capture the get-type in event in lambda function, proceed to enhance as needed.
+   Work on get-type = 'all' first.
+
+6. For get-type = single, we need the ProductVisitKey to query the dynamodb table and we accept the ProductVisitKey as a "query string parameter".
+   To achieve this, in the "Method Request" section of the API, add the URL query string parameter - ProductVisitKey. 
+   "Required" is not enabled because this parameter is not required when get-type = all.
+   Then, go to the Integration Request section of the API, edit mapping template to:
+   {
+     "type": "$input.params('get-type')",
+     "product_visit_key": "$input.params('ProductVisitKey')"
+   }
+
+7. Once you are able to capture the get-type and ProductVisitKey in event in lambda function, proceed to enhance as needed, for get-type = 'single'.
+
+8a. Next step is to stop bad requests at the beginning itself.
+   For the GET method request, since there is no request body, no "model" is needed.
+   Just ensure you have enabled "Validate query string parameters and headers".
+   Now if you try to test the GET method without passing value for "get-type", you will get a 400 error {"message": "Missing required request parameters: [get-type]".
+   The request will not even go to lambda.
+   Note that for us "ProductVisitKey" is NOT a "required" field as in it is not needed for get-type "all".
+   If someone sends blank key for get-type "single", handle it in lambda.
+
+8b. Now lets use a model to validate the request body for the POST method.
+    In the "Models" section of the API, create the model validatePostMethodRequestForProductVisitsAPI:
+    
+    {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "productVisitsPostModel",
+    "type": "object",
+    "properties": {
+    "ProductId": {"type": "string"},
+    "ProductName": {"type": "string"},
+    "Category": {"type": "string"},
+    "PricePerUnit": {"type": "string"},
+    "CustomerId": {"type": "string"},
+    "CustomerName": {"type": "string"},
+    "TimeOfVisit": {"type": "string"}
+  },
+  "required": ["ProductId", "ProductName", "Category", "PricePerUnit", "CustomerId", "CustomerName", "TimeOfVisit"]
+}
+
+   Then go to the "Method Request" section of the POST method. 
+   Set Request Validator as "Validate body" and Request body as the model created above.
+   Now if you try to remove any parameter at the time of POSTIng or send a different data type, you will get the 400 "Invalid request body" error.
+   The request will not even reach lambda.
+   Additional parameters will go through though using this model.
+

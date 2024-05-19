@@ -1,0 +1,11 @@
+1. In the AWS Console, Go to CloudTrail, provide a name for the trail and an S3 storage location for the trail logs.
+You can choose to encrypt the log file, validate the log file etc
+Choose "management events" for event type and Read, Write API activity.
+This is enough if you just want to log management type read/write information.
+If you want email notification, go ahead with the remaining steps below.
+
+2. Create an SNS Topic MyEmailNotificationTopic with valid email id as subscription.
+
+3. Create an EventBridge rule with source service as S3, event type as Bucket-Level API Call via CloudTrail and target as the SNS topic.
+
+4. For testing, in the static website bucket, try removing the bucket policy and you should get an email based on that activity.

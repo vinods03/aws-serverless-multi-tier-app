@@ -1,0 +1,22 @@
+1. On the DynamoDB table ProductVisits, go to 'Exports and Streams' and Turn it on for NEW IMAGE.
+
+2. Then create an S3 bucket product-visits-datalake-vinod.
+
+3. Create lambda function productVisitsDataLakeLoader with default execution role first (for writing to cloudwatch).
+   Then add permissions related to dynamodb and S3 that are needed here. Change the timeout to 5 mins.
+
+4. Go back to DynamoDB table ProductVisits, 'Exports and Streams' tab and add Trigger to above lambda function.
+
+5. Now send messages to the SQS queue using these json files
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-1.json
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-2.json
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-3.json
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-4.json
+   aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXX/ProductVisitsDataQueue --message-body file://message-body-5.json
+
+6. Develop the code for the lambda function methodically. Start by printing the event and then proceed till you are able to extract the body and the individual columns.
+   Verify the cloudwatch logs.
+   Form the list of field names.
+   Form a row of data.
+   Use csv.writer to write field names and row of data into /tmp location of lambda.
+   Then using boto3, upload the temp file into the s3 bucket with a dynamic prefix 'data/' + year + '/' +  month + '/' +  day + '/' +  hour + '/' + product_visit_key.

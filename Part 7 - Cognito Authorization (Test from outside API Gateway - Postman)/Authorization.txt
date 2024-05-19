@@ -1,0 +1,92 @@
+Steps:
+
+=== Cognito: Create user pool
+
+Cognito user pool sign-in options -> Choose email
+
+Leave the Cognito defaults for password settings
+
+No MFA
+
+Enable self-service account recovery 
+
+Delivery method for user account recovery messages -> Email only
+
+Enable self registration
+
+Allow Cognito to automatically send messages to verify and confirm -> Send email message, verify email address
+
+Keep original attribute value active when an update is pending - Recommended -> Email address
+
+No other additional attributes needed (other than email)
+
+Configure how your user pool sends email messages to users -> Send email with Cognito
+
+Leave the default FROM and TO email addresses
+
+User pool name -> product-visits-user-pool
+
+Initial app client -> Public client -> product-visits-app-client
+App clients are single-app platforms in your user pool that have permissions to call unauthenticated API operations. A user pool can have multiple app clients.
+
+Don't generate a client secret
+
+In the advanced app client settings, you can override defaults for access token / ID token / refresh token expiration duration, if you want to.
+Select all required options in "Authentication flows".
+
+Note down the user pool id, client id
+
+=== Cognito: Create user in the user pool
+
+Provide email address, set password and send an email invitation. Once you create user, you will get email with the set password.
+
+In the Cognito Users screen, you will see Confirmation Status as "Force change password"
+
+=== Launch an EC2 instance or use CloudShell, set the new password and get the tokens.
+
+Run the below command to change password for the user created above, using the user pool id / client id noted earlier and the email/set password of the user created above.
+
+aws cognito-idp admin-initiate-auth --user-pool-id us-east-1_stEdBOFdz --client-id 3g9oon9g1k54o8uh2bc1o1n5lg --auth-flow ADMIN_NO_SRP_AUTH --auth-parameters USERNAME=vinods03@gmail.com,PASSWORD=L@50Cygy --region us-east-1
+
+aws cognito-idp admin-initiate-auth --user-pool-id us-east-1_stEdBOFdz --client-id 3g9oon9g1k54o8uh2bc1o1n5lg --auth-flow ADMIN_NO_SRP_AUTH --auth-parameters USERNAME=vinods03@gmail.com,PASSWORD=L@51Cygy --region us-east-1
+
+You will get a NEW_PASSWORD_REQUIRED challenge name and a session id. Note the session id and use in below command:
+Provide the new password here.
+
+== Here is where you are actually setting the new password for the user created above in Cognito Users screen, the status will change to "Confirmed" now.
+
+aws cognito-idp admin-respond-to-auth-challenge --user-pool-id us-east-1_stEdBOFdz --region us-east-1 --client-id 3g9oon9g1k54o8uh2bc1o1n5lg --challenge-name NEW_PASSWORD_REQUIRED --challenge-responses NEW_PASSWORD=L@51Cygy,USERNAME=vinods03@gmail.com --session AYABeKUM1O227hq02e0e2zBoi5UAHQABAAdTZXJ2aWNlABBDb2duaXRvVXNlclBvb2xzAAEAB2F3cy1rbXMAS2Fybjphd3M6a21zOnVzLWVhc3QtMTo3NDU2MjM0Njc1NTU6a2V5L2IxNTVhZmNhLWJmMjktNGVlZC1hZmQ4LWE5ZTA5MzY1M2RiZQC4AQIBAHjHL4WD3WpekpFe85nxP9Nwg99u3bPN6BTSaB-uHZcTLAG2XEoO2HG14tZIysFXAjeBAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMBM3fVqU3LRL_vittAgEQgDvrDhtu_doo2BdzE59kx6fPW_gGZwe2DQ_Uwe007KEqaADxPDxWigDuHDUh-wx0UhHtap_ogRDQU3eHGwIAAAAADAAAEAAAAAAAAAAAAAAAAABczt8DLBWqcwG6hD-8io0C_____wAAAAEAAAAAAAAAAAAAAAEAAADVCBaBNwkbYiEBw9t2EapLR3gRv5B_G7NVbD7_W_-TghRkz1mTxftS-Ps6baHz8nCfMGymNmlJNXCaRbHuMOe4Xazm8uaY7emibYLO23_9GkSSusvjlXkDjbEuoYM-KBq95w7tjVy6eEqbxVUmrNyTMLd7cN0URQfa_usZRlehlwN16a2inI8AhBRPxTA0CMjBUkPYuka-jwp-HnqQuX_zbv5eDKf2Kg9qgh9FmzkyceIFAeZxeRFa2uXdvX8cfPguErNSba-jBSiAEKl9rqj4OZy16bnSTFECHLmB9en8ANf7bRAPWQ
+
+You will get Access Token, Refresh Token and Id Token. What we need is Id Token. Note it down.
+
+Now use the valid cognito user details in API Gateway authorization.
+
+=== API Gateway Authorizer
+
+Go to your API compare-yourself, Authorizers, create authorizer, product-visits-authorizer.
+
+Choose authorizer type as Cognito, choose the cognito user pool created above
+
+Set the "Token Source" as "Authorization"
+
+Test the authorizer now by passing the Id Token we got above in the "Token value" section. You must get a 200 code with a "Claims" json message.
+
+If the token value is wrong, you will get a 401 Unauthorized request error.
+
+=== API Gateway Resource / method level changes
+
+Go to your API / Resource / Method, where you want to enable Authorization
+
+In productVisit API / resource, POST / GET methods, method request, Authorization, select the authoriser created above.
+
+Deploy the API to the correct stage and you will get the Invoke URL: https://9948o5p7l4.execute-api.us-east-1.amazonaws.com/dev/productVisit/{get-type}
+
+=== To test this, you need to deploy and test from outside the API Gateway i.e. through POSTMAN.
+
+Open POSTMAN
+
+Enter the invoke URL of the get method: https://9948o5p7l4.execute-api.us-east-1.amazonaws.com/dev/productVisit/all
+In the "Headers", add the key "Authorization" and pass the Id token value created above.
+You should get a 200 OK message and all records in DynamoDB must be returned.
+If you do not pass the Authorization key or pass an Incorrect Authorization key, you will get the 401 Unauthorized error.
+
